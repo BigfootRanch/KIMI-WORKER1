@@ -1,3 +1,27 @@
-https://tinyurl.com/kimi-worker-zip
+import { createClient } from '@supabase/supabase-js'
+
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_KEY
+)
+
+const workerName = process.env.WORKER || 'kimi-worker'
+
+async function claimAndWork() {
+  const { data: task } = await supabase.rpc('claim_task_for_worker', {
+    p_worker_name: workerName
+  })
+
+  if (task) {
+    console.log('Claimed task', task.id)
+    // do your Kimi / Claude work here
+    await supabase.from('task_queue').update({ status: 'completed' }).eq('id', task.id)
+  }
+}
+
+setInterval(claimAndWork, 5000)
+console.log(workerName, 'started')
+
+
 
 
